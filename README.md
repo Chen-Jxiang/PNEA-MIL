@@ -84,10 +84,10 @@ The file column gives the path to the .pt file for each slide. The label column 
 
 An example CSV file is shown below:
 
-file,label
-/path/to/slide_0001.pt,0
-/path/to/slide_0002.pt,1
-/path/to/slide_0003.pt,0
+file,label <br>
+/path/to/slide_0001.pt,0 <br>
+/path/to/slide_0002.pt,1 <br>
+/path/to/slide_0003.pt,0 <br>
 
 Each row corresponds to one slide. For example, the row
 
