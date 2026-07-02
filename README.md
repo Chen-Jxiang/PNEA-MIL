@@ -99,7 +99,7 @@ The label should not be saved inside the .pt file. The .pt file should only cont
 
 For training and testing, separate CSV files can be provided. For example:
 
-train.csv
+train.csv <br>
 test.csv
 
 Each CSV file should follow the same format, with one row per slide and columns specifying the feature file path and slide-level label.
