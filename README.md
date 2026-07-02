@@ -38,73 +38,91 @@ conda create -n pnea-mil python=3.10
 conda activate pnea-mil
 ```
 
-Install the required packages:
+Install PyTorch first. For GPU support, install the CUDA-enabled PyTorch version that matches your system. For example, for CUDA 12.8:
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+```
+
+For CPU-only installation:
+
+```bash
+pip install torch torchvision torchaudio
+```
+
+Please check the official PyTorch installation selector if a different CUDA version is needed.
+
+Then install the remaining required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+The `requirements.txt` file intentionally does not include `torch`, because the correct PyTorch installation depends on the user’s CUDA and hardware configuration.
+
 ## Data Format
 
-The code assumes that each WSI has already been converted into patch-level feature embeddings.
+The input data should be organized at the slide level. Each slide is represented by one .pt file containing its patch-level feature matrix, and the slide-level label is provided separately in a CSV file.
 
-A typical input CSV file should contain one row per slide:
+Each .pt file should store a single PyTorch tensor:
 
-```csv
-slide_id,label,feature_path
-slide_001,1,/path/to/slide_001_features.npy
-slide_002,0,/path/to/slide_002_features.npy
-```
+x = torch.load(file_path)
 
-Each feature file should contain a NumPy array with shape:
+The tensor should have shape:
 
-```text
-number_of_patches × feature_dimension
-```
+[num_patches, feature_dim]
 
-For example, if 1024-dimensional patch features are used, each slide-level feature file should have shape:
+where num_patches is the number of patches extracted from the slide, and feature_dim is the dimension of the feature vector for each patch.
 
-```text
-number_of_patches × 1024
+The number of patches does not need to be the same across slides. For example, one slide may contain 8,000 patches, while another slide may contain 20,000 patches. However, the feature dimension should be the same for all slides.
+
+The slide-level labels are stored in a CSV file. The CSV file should contain at least two columns:
+
+file,label
+
+The file column gives the path to the .pt file for each slide. The label column gives the slide-level class label.
+
+An example CSV file is shown below:
+
+file,label
+/path/to/slide_0001.pt,0
+/path/to/slide_0002.pt,1
+/path/to/slide_0003.pt,0
+
+Each row corresponds to one slide. For example, the row
+
+/path/to/slide_0001.pt,0
+
+means that /path/to/slide_0001.pt stores the patch-level feature tensor for one slide, and the slide-level label for that slide is 0.
+
+The label should not be saved inside the .pt file. The .pt file should only contain the patch feature tensor. This separation allows the same feature files to be reused with different label files or different train/test splits.
+
+For training and testing, separate CSV files can be provided. For example:
+
+train.csv
+test.csv
+
+Each CSV file should follow the same format, with one row per slide and columns specifying the feature file path and slide-level label.
+
+This format is designed for multiple-instance learning. Each slide is treated as a bag of patch-level feature vectors, while supervision is provided only at the slide level.
+
+## Toy Data Generating
+
+We provide code for generating toy data:
+
+```bash
+python Generate_toy_data.py
 ```
 
 ## Training
 
-A simple training command is:
+A simple training command utilizing the toy data is:
 
 ```bash
-python train.py \
-    --train_csv data/train.csv \
-    --val_csv data/val.csv \
-    --input_dim 1024 \
-    --num_evidence_axes 64 \
-    --lambda_l1 5.0 \
-    --lr 1e-4 \
-    --epochs 100 \
-    --output_dir outputs/
-```
-
-Example arguments:
-
-* `--train_csv`: path to the training CSV file.
-* `--val_csv`: path to the validation CSV file.
-* `--input_dim`: dimension of the patch-level feature embeddings.
-* `--num_evidence_axes`: number of positive and negative evidence axes.
-* `--lambda_l1`: strength of L1 regularization on evidence weights.
-* `--lr`: learning rate.
-* `--epochs`: number of training epochs.
-* `--output_dir`: directory for saving checkpoints and logs.
-
-## Output
-
-The training script saves model checkpoints and validation results to the specified output directory.
-
-Example:
-
-```text
-outputs/
-├── best_model.pt
-├── last_model.pt
+python train_PNEA-MIL.py \
+    --train_csv toy_data/train.csv \
+    --test_csv toy_data/test.csv \
+    --output_model_file ./model/model
 ```
 
 ## Citation
@@ -125,4 +143,3 @@ If you use this code, please cite our paper:
 ## License
 
 Please see the `LICENSE` file for details.
-
