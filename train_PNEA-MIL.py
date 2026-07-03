@@ -282,7 +282,7 @@ def main():
         model.load_state_dict( torch.load(args.output_model_file, weights_only=True) ["model_state_dict"] )
         auc, ba, mcc = evaluate_metrics(model, test_loader, device)
     
-        print(f"Performance on Test Data: ROC AUC={auc:.4f}| BA={auc:.4f} | MCC={auc:.4f}")
+        print(f"Performance on Test Data: ROC AUC={auc:.4f}| BA={ba:.4f} | MCC={mcc:.4f}")
         
 
 if __name__ == "__main__":
